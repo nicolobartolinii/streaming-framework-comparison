@@ -1,0 +1,30 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+
+dashboards:
+  - name: 'Kafka Overview'
+    org_id: 1
+    folder: ''
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards/kafka-dashboard.json
+
+  - name: 'Spark Overview'
+    org_id: 1
+    folder: ''
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards/spark-dashboard.json
+
+  - name: 'Fitband App Overview'
+    org_id: 1
+    folder: ''
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards/fitband-dashboard.json

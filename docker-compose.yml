@@ -3,67 +3,99 @@ version: '3.8'
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    hostname: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      JUTE_MAXBUFFER: 104857600
 
   kafka:
     image: confluentinc/cp-kafka:latest
     container_name: kafka
+    hostname: kafka
     depends_on:
       - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+      - "9101:9101"
+      - "9102:9102"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    ports:
-      - "9092:9092"
-
-  pulsar:
-    image: apachepulsar/pulsar:latest
-    container_name: pulsar
-    command: bin/pulsar standalone
-    ports:
-      - "6650:6650"
-      - "8080:8080"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+      KAFKA_JMX_PORT: 9102  # Cambiato da 9101 a 9102
+      KAFKA_JMX_HOSTNAME: kafka
+      KAFKA_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=9101:/usr/app/prometheus-jmx-config.yml"
+    volumes:
+      - ./kafka-data:/var/lib/kafka/data
+      - ./jmx_prometheus_javaagent.jar:/usr/app/jmx_prometheus_javaagent.jar
+      - ./prometheus-jmx-config.yml:/usr/app/prometheus-jmx-config.yml
 
   spark-master:
     image: bitnami/spark:latest
     environment:
       - SPARK_MODE=master
+      - SPARK_METRICS_CONF_FILE=/opt/bitnami/spark/conf/metrics.properties
     ports:
       - "8090:8080"
       - "7077:7077"
+    volumes:
+      - ./spark-metrics.properties:/opt/bitnami/spark/conf/metrics.properties
 
   spark-worker:
     image: bitnami/spark:latest
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_METRICS_CONF_FILE=/opt/bitnami/spark/conf/metrics.properties
+    volumes:
+      - ./spark-metrics.properties:/opt/bitnami/spark/conf/metrics.properties
     depends_on:
       - spark-master
 
-  flink-jobmanager:
-    image: flink:latest
+  prometheus:
+    image: prom/prometheus:latest
     ports:
-      - "8081:8081"
-    command: jobmanager
-    environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: flink-jobmanager
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
 
-  flink-taskmanager:
-    image: flink:latest
-    depends_on:
-      - flink-jobmanager
-    command: taskmanager
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana.yml:/etc/grafana/provisioning/datasources/datasources.yml
     environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: flink-jobmanager
-        taskmanager.numberOfTaskSlots: 2
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+  zookeeper-exporter:
+    image: tops1/zookeeper-exporter:v0.1.12-arm64
+    command:
+      - -zk-hosts=zookeeper
+    ports:
+      - "9141:9141"
+    depends_on:
+      - zookeeper
+
+volumes:
+    kafka-data:
 
 networks:
   default:
-    name: stream-processing-network
+    name: fitband-streaming-network
