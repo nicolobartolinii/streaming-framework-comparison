@@ -1,3 +1,5 @@
+# main.py
+
 import argparse
 import threading
 import time
@@ -11,9 +13,6 @@ from utils.performance_metrics import PerformanceMetrics
 def run_producer(producer, stop_event):
     producer.produce(stop_event)
 
-def run_consumer(consumer, stop_event):
-    consumer.consume(stop_event)
-
 def main():
     parser = argparse.ArgumentParser(description='Run Fitband data streaming test')
     parser.add_argument('--consumer', choices=['kafka-streams', 'spark'], required=True)
@@ -24,7 +23,7 @@ def main():
     parser.add_argument('--num-devices', type=int, default=1)
     args = parser.parse_args()
 
-    bootstrap_servers = 'localhost:9092'
+    bootstrap_servers = 'localhost:29092'
     stop_event = threading.Event()
 
     metrics = PerformanceMetrics(bootstrap_servers)
@@ -46,20 +45,19 @@ def main():
         threading.Thread(target=run_producer, args=(temp_batt_producer, stop_event))
     ]
 
-    consumer_thread = threading.Thread(target=run_consumer, args=(consumer, stop_event))
-
     for thread in producer_threads:
         thread.start()
+
+    if args.consumer == 'kafka-streams':
+        consumer_thread = threading.Thread(target=consumer.consume, args=(stop_event,))
+    else:
+        consumer_thread = threading.Thread(target=consumer.create_stream, args=(stop_event,))
     consumer_thread.start()
 
-    # Calcola la dimensione dei dati per la durata specificata
-    topics = ['ppg-topic', 'acc-topic', 'temp-batt-topic']
-    metrics.print_data_size(topics, args.duration)
+    # Run for specified duration
+    time.sleep(args.duration)
 
-    for _ in range(args.duration):
-        metrics.collect_system_metrics()
-        time.sleep(1)
-
+    # Stop all threads
     stop_event.set()
 
     for thread in producer_threads:

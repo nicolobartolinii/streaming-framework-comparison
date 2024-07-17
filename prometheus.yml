@@ -1,6 +1,6 @@
 global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+  scrape_interval: 1s
+  evaluation_interval: 1s
 
 scrape_configs:
   - job_name: 'kafka'
@@ -20,3 +20,8 @@ scrape_configs:
   - job_name: 'zookeeper'
     static_configs:
       - targets: ['zookeeper-exporter:9141']
+
+  - job_name: 'kafka-consumer'
+    static_configs:
+      - targets: [ 'host.docker.internal:8001' ]
+    metrics_path: '/'

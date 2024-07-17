@@ -18,7 +18,7 @@ class SparkStreamingConsumer:
             .getOrCreate()
         self.spark.sparkContext.setLogLevel("ERROR")
 
-    def create_stream(self, topic, schema):
+    def create_stream(self, topic, schema=StructType([])):
         return self.spark \
             .readStream \
             .format("kafka") \
@@ -72,6 +72,10 @@ class SparkStreamingConsumer:
         ppg_query = self.process_stream(ppg_stream, "ppg-topic")
         acc_query = self.process_stream(acc_stream, "acc-topic")
         temp_batt_query = self.process_stream(temp_batt_stream, "temp-batt-topic")
+
+        print(ppg_query)
+        print(acc_query)
+        print(temp_batt_query)
 
         try:
             while True:

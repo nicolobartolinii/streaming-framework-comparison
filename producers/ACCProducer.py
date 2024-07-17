@@ -1,9 +1,9 @@
 import csv
 import json
-import threading
 import time
 from kafka import KafkaProducer
 from datetime import datetime
+import itertools
 
 
 class ACCProducer:
@@ -16,15 +16,18 @@ class ACCProducer:
         self.csv_file = csv_file
         self.frequency = frequency
         self.num_devices = num_devices
+        self.interval = 1.0 / frequency
 
     def produce(self, stop_event):
         with open(self.csv_file, 'r') as file:
             csv_reader = csv.DictReader(file)
-            start_time = time.time()
-            for row in csv_reader:
-                if stop_event.is_set():
-                    break
+            csv_cycle = itertools.cycle(csv_reader)
+
+            while not stop_event.is_set():
+                start_time = time.time()
+
                 for device_id in range(self.num_devices):
+                    row = next(csv_cycle)
                     message = {
                         'MAC_Addr': f"device_{device_id}_{row['MAC_Addr']}",
                         'Timestamp': datetime.now().isoformat(),
@@ -34,21 +37,11 @@ class ACCProducer:
                     }
                     self.producer.send(self.topic, message)
 
-                # Control the sending rate
+                # Calcola il tempo rimanente per mantenere la frequenza corretta
                 elapsed_time = time.time() - start_time
-                expected_messages = elapsed_time * self.frequency
-                if csv_reader.line_num < expected_messages:
-                    time.sleep((expected_messages - csv_reader.line_num) / self.frequency)
+                sleep_time = self.interval - elapsed_time
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
 
     def close(self):
         self.producer.close()
-
-
-if __name__ == "__main__":
-    producer = ACCProducer('localhost:29092', 'acc-topic', 'data/ppg.csv', 100, 1)
-    try:
-        producer.produce(threading.Event())
-    except KeyboardInterrupt:
-        pass
-    finally:
-        producer.close()

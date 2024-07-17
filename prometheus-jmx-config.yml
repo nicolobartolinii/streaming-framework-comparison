@@ -1,6 +1,38 @@
 lowercaseOutputName: true
+lowercaseOutputLabelNames: true
 rules:
-  - pattern: "kafka.server<type=(.+), name=(.+)><>Value"
+  - pattern: ".*"
+
+  # Kafka Broker metrics
+  - pattern: kafka.server<type=(.+), name=(.+)><>Value
     name: kafka_server_$1_$2
-  - pattern: "kafka.controller<type=(.+), name=(.+)><>Value"
+  - pattern: kafka.controller<type=(.+), name=(.+)><>Value
     name: kafka_controller_$1_$2
+
+  # Producer metrics
+  - pattern: kafka.producer<type=producer-metrics, client-id=(.+)><>(.+-total|compression-rate|response-rate|request-rate)
+    name: kafka_producer_$2
+    labels:
+      client_id: "$1"
+
+  # Consumer metrics
+  - pattern: kafka.consumer<type=consumer-fetch-manager-metrics, client-id=(.+)><>(.+)
+    name: kafka_consumer_$2
+    labels:
+      client_id: "$1"
+  - pattern: kafka.consumer<type=consumer-coordinator-metrics, client-id=(.+)><>(.+)
+    name: kafka_consumer_coordinator_$2
+    labels:
+      client_id: "$1"
+
+  # Common JVM metrics
+  - pattern: java.lang<type=OperatingSystem><>(.+)
+    name: java_lang_OperatingSystem_$1
+  - pattern: java.lang<type=Memory><HeapMemoryUsage>(.+)
+    name: java_lang_Memory_HeapMemoryUsage_$1
+  - pattern: java.lang<type=Memory><NonHeapMemoryUsage>(.+)
+    name: java_lang_Memory_NonHeapMemoryUsage_$1
+  - pattern: java.lang<type=GarbageCollector, name=(.+)><>(.+)
+    name: java_lang_GarbageCollector_$2
+    labels:
+      name: $1
