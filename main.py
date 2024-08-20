@@ -7,11 +7,14 @@ from producers.PPGProducer import PPGProducer
 from producers.ACCProducer import ACCProducer
 from producers.TempBattProducer import TempBattProducer
 from consumers.kafka_streams_consumer import KafkaStreamsConsumer
-from consumers.spark_streaming_consumer import SparkStreamingConsumer
+from consumers.spark_streaming_consumer import SparkStreamingConsumer  # Ensure this path is correct
 from utils.performance_metrics import PerformanceMetrics
 
 def run_producer(producer, stop_event):
     producer.produce(stop_event)
+
+def run_spark_consumer(consumer, stop_event):
+    consumer.run()  # Ensure this method starts the stream and keeps it running
 
 def main():
     parser = argparse.ArgumentParser(description='Run Fitband data streaming test')
@@ -34,8 +37,10 @@ def main():
 
     if args.consumer == 'kafka-streams':
         consumer = KafkaStreamsConsumer(bootstrap_servers, ['ppg-topic', 'acc-topic', 'temp-batt-topic'], 'fitband-consumer-group')
+        consumer_thread = threading.Thread(target=consumer.consume, args=(stop_event,))
     else:
         consumer = SparkStreamingConsumer(bootstrap_servers, ['ppg-topic', 'acc-topic', 'temp-batt-topic'])
+        consumer_thread = threading.Thread(target=run_spark_consumer, args=(consumer, stop_event))
 
     metrics.start_measurement()
 
@@ -48,10 +53,6 @@ def main():
     for thread in producer_threads:
         thread.start()
 
-    if args.consumer == 'kafka-streams':
-        consumer_thread = threading.Thread(target=consumer.consume, args=(stop_event,))
-    else:
-        consumer_thread = threading.Thread(target=consumer.create_stream, args=(stop_event,))
     consumer_thread.start()
 
     time.sleep(args.duration)
