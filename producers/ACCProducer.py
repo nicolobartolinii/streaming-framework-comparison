@@ -37,7 +37,6 @@ class ACCProducer:
                     }
                     self.producer.send(self.topic, message)
 
-                # Calcola il tempo rimanente per mantenere la frequenza corretta
                 elapsed_time = time.time() - start_time
                 sleep_time = self.interval - elapsed_time
                 if sleep_time > 0:

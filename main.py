@@ -54,10 +54,8 @@ def main():
         consumer_thread = threading.Thread(target=consumer.create_stream, args=(stop_event,))
     consumer_thread.start()
 
-    # Run for specified duration
     time.sleep(args.duration)
 
-    # Stop all threads
     stop_event.set()
 
     for thread in producer_threads:
