@@ -30,13 +30,14 @@ class PPGProducer:
                     row = next(csv_cycle)
                     message = {
                         'MAC_Addr': f"device_{device_id}_{row['MAC_Addr']}",
-                        'Timestamp': datetime.now().isoformat(),
+                        'Timestamp_CSV': row['Timestamp'],
                         'PPG1': float(row['PPG1']),
                         'PPG2': float(row['PPG2']),
                         'PPG3': float(row['PPG3']),
                         'PPG4': float(row['PPG4']),
                         'PPG5': float(row['PPG5']),
-                        'PPG6': float(row['PPG6'])
+                        'PPG6': float(row['PPG6']),
+                        'Timestamp_produced': time.time()
                     }
                     self.producer.send(self.topic, message)
 

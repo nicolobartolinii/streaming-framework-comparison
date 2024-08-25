@@ -30,10 +30,11 @@ class TempBattProducer:
                     row = next(csv_cycle)
                     message = {
                         'MAC_Addr': f"device_{device_id}_{row['MAC_Addr']}",
-                        'Timestamp': datetime.now().isoformat(),
+                        'Timestamp': row['Timestamp'],
                         'Temperature': float(row['Temperature']),
                         'Batt_level': float(row['Batt_level']),
-                        'Batt_status': row['Batt_status']
+                        'Batt_status': row['Batt_status'],
+                        'Timestamp_produced': time.time()
                     }
                     self.producer.send(self.topic, message)
 

@@ -30,10 +30,11 @@ class ACCProducer:
                     row = next(csv_cycle)
                     message = {
                         'MAC_Addr': f"device_{device_id}_{row['MAC_Addr']}",
-                        'Timestamp': datetime.now().isoformat(),
+                        'Timestamp_CSV': row['Timestamp'],
                         'ACC_X': float(row['ACC_X']),
                         'ACC_Y': float(row['ACC_Y']),
-                        'ACC_Z': float(row['ACC_Z'])
+                        'ACC_Z': float(row['ACC_Z']),
+                        'Timestamp_produced': time.time()
                     }
                     self.producer.send(self.topic, message)
 

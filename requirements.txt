@@ -14,3 +14,5 @@ psutil
 
 # Prometheus
 prometheus-client
+
+brainflow
