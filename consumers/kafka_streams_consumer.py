@@ -1,3 +1,5 @@
+from venv import logger
+
 import numpy as np
 from confluent_kafka import Consumer, KafkaError
 import json
@@ -14,6 +16,7 @@ SPO2_GAUGE = Gauge('fitband_oxygen_level', 'Oxygen Level from Fitband', ['device
 
 class KafkaStreamsConsumer:
     def __init__(self, bootstrap_servers, topics, group_id):
+        logger.error(f"Initializing KafkaStreamsConsumer with bootstrap servers: {bootstrap_servers}")
         self.consumer = Consumer({
             'bootstrap.servers': bootstrap_servers,
             'group.id': group_id,
@@ -28,7 +31,7 @@ class KafkaStreamsConsumer:
         self.ppg4_accumulated = []
         self.ppg5_accumulated = []
         self.ppg6_accumulated = []
-        self.accumulation_threshold = 1024
+        self.accumulation_threshold = 2048
 
         start_http_server(8001)
 
@@ -88,7 +91,7 @@ class KafkaStreamsConsumer:
         # Calcolare SpO2 e HR usando BrainFlow
         try:
             spo2 = DataFilter.get_oxygen_level(ppg_ir, ppg_red, 100, coef3=130.6898759)
-            hr = DataFilter.get_heart_rate(ppg_ir, ppg_red, 100, 1024)
+            hr = DataFilter.get_heart_rate(ppg_ir, ppg_red, 100, self.accumulation_threshold)
 
             # Aggiornare le metriche Prometheus
             HR_GAUGE.labels(device_id).set(hr)

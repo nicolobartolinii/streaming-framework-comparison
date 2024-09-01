@@ -5,7 +5,7 @@ global:
 scrape_configs:
   - job_name: 'kafka'
     static_configs:
-      - targets: ['kafka:9101']
+      - targets: ['192.168.12.204:9101']
 
   - job_name: 'spark-master'
     static_configs:
