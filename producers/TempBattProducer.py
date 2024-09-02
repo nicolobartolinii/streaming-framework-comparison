@@ -7,6 +7,11 @@ import itertools
 
 
 class TempBattProducer:
+    """
+    This class is responsible for producing Temperature and Battery data to a Kafka topic from a specified CSV file.
+
+    For specific comments on the code, please refer to the ACCProducer class.
+    """
     def __init__(self, bootstrap_servers, topic, csv_file, frequency, num_devices):
         self.producer = KafkaProducer(
             bootstrap_servers=bootstrap_servers,

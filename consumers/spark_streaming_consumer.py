@@ -4,8 +4,18 @@ from pyspark.sql.types import StructType, StructField, StringType, FloatType, Ti
 import time
 import logging
 
+
 class SparkStreamingConsumer:
+    """
+    This class is responsible for consuming data from Kafka topics and processing it. It uses Spark Streaming.
+    """
     def __init__(self, bootstrap_servers, topics):
+        """
+        Initializes the consumer with the specified parameters.
+
+        :param bootstrap_servers: the bootstrap servers for the Kafka cluster
+        :param topics: the list of topics to consume from
+        """
         self.bootstrap_servers = bootstrap_servers
         self.topics = topics
         self.spark = SparkSession.builder \
@@ -21,6 +31,13 @@ class SparkStreamingConsumer:
         self.logger.setLevel(logging.DEBUG)
 
     def create_stream(self, topic, schema=StructType([])):
+        """
+        Creates a Spark Streaming stream for the specified topic and schema.
+
+        :param topic: the topic to consume from
+        :param schema: the schema of the data to consume
+        :return: the Spark Streaming stream
+        """
         self.logger.info(f'Creating stream for topic: {topic} with schema: {schema}')
         stream_df = self.spark \
             .readStream \
@@ -38,6 +55,13 @@ class SparkStreamingConsumer:
         return stream_df
 
     def process_stream(self, df, topic):
+        """
+        Processes the Spark Streaming stream for the specified topic.
+
+        :param df: the Spark Streaming stream
+        :param topic: the topic to process
+        :return: the Spark Streaming query
+        """
         self.logger.info(f'Processing stream for topic: {topic}')
         query = df \
             .writeStream \
@@ -47,6 +71,11 @@ class SparkStreamingConsumer:
         return query
 
     def run(self):
+        """
+        Runs the consumer.
+
+        :return: None
+        """
         ppg_schema = StructType([
             StructField("MAC_Addr", StringType()),
             StructField("Timestamp", TimestampType()),
