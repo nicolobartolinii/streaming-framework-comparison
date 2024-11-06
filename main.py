@@ -48,15 +48,15 @@ def main():
     args = parser.parse_args()
 
     # Bootstrap servers for Kafka (localhost:29092 for local deployment)
-    bootstrap_servers = '192.168.12.204:29092'
+    bootstrap_servers = 'localhost:29092'
     # Create a stop event to stop the producers and consumers
     stop_event = threading.Event()
 
     # Create the three producers (one for each topic/CSV file)
-    ppg_producer = PPGProducer(bootstrap_servers, 'ppg-topic', 'data/ppg.csv', args.ppg_rate, args.num_devices)
-    acc_producer = ACCProducer(bootstrap_servers, 'acc-topic', 'data/acc.csv', args.acc_rate, args.num_devices)
-    temp_batt_producer = TempBattProducer(bootstrap_servers, 'temp-batt-topic', 'data/temp_batt.csv',
-                                          args.temp_batt_rate, args.num_devices)
+    # ppg_producer = PPGProducer(bootstrap_servers, 'ppg-topic', 'data/ppg.csv', args.ppg_rate, args.num_devices)
+    # acc_producer = ACCProducer(bootstrap_servers, 'acc-topic', 'data/acc.csv', args.acc_rate, args.num_devices)
+    # temp_batt_producer = TempBattProducer(bootstrap_servers, 'temp-batt-topic', 'data/temp_batt.csv',
+    #                                      args.temp_batt_rate, args.num_devices)
 
     # Create the consumer based on the command line argument (Kafka Streams or Spark Streaming)
     if args.consumer == 'kafka-streams':
@@ -68,15 +68,15 @@ def main():
         consumer_thread = threading.Thread(target=run_spark_consumer, args=(consumer, stop_event))
 
     # Insert the producers inside a list. Each element in the list is a thread that runs the producer.
-    producer_threads = [
-        threading.Thread(target=run_producer, args=(ppg_producer, stop_event)),
-        threading.Thread(target=run_producer, args=(acc_producer, stop_event)),
-        threading.Thread(target=run_producer, args=(temp_batt_producer, stop_event))
-    ]
+    # producer_threads = [
+    #     threading.Thread(target=run_producer, args=(ppg_producer, stop_event)),
+    #     threading.Thread(target=run_producer, args=(acc_producer, stop_event)),
+    #     threading.Thread(target=run_producer, args=(temp_batt_producer, stop_event))
+    # ]
 
     # Start the producers
-    for thread in producer_threads:
-        thread.start()
+    # for thread in producer_threads:
+    #     thread.start()
 
     # Start the consumer
     consumer_thread.start()
@@ -88,8 +88,8 @@ def main():
     stop_event.set()
 
     # Join the producers and consumer threads
-    for thread in producer_threads:
-        thread.join()
+    # for thread in producer_threads:
+    #     thread.join()
     consumer_thread.join()
 
 

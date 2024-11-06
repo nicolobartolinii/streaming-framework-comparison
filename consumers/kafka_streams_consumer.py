@@ -40,7 +40,7 @@ class KafkaStreamsConsumer:
         self.ppg4_accumulated = []
         self.ppg5_accumulated = []
         self.ppg6_accumulated = []
-        self.accumulation_threshold = 2048
+        self.accumulation_threshold = 1024
 
         start_http_server(8001)
 
@@ -97,8 +97,8 @@ class KafkaStreamsConsumer:
         ppg_red = np.array(self.ppg5_accumulated[-self.accumulation_threshold:])  # Convert the PPG5 accumulator to a numpy array
 
         try:  # Try to calculate SpO2 and HR using BrainFlow
-            spo2 = DataFilter.get_oxygen_level(ppg_ir, ppg_red, 100, coef3=130.6898759)  # Calculate SpO2
-            hr = DataFilter.get_heart_rate(ppg_ir, ppg_red, 100, self.accumulation_threshold)  # Calculate HR
+            spo2 = DataFilter.get_oxygen_level(ppg_ir, ppg_red, 25, coef3=130.6898759)  # Calculate SpO2
+            hr = DataFilter.get_heart_rate(ppg_ir, ppg_red, 25, self.accumulation_threshold)  # Calculate HR
 
             HR_GAUGE.labels(device_id).set(hr)  # Set the HR gauge
             SPO2_GAUGE.labels(device_id).set(spo2)  # Set the SpO2 gauge
